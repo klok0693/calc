@@ -1,5 +1,6 @@
 package calc;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -76,7 +77,7 @@ class Calc {
 
             stack.push(s);
         }
-        pushStack(stack, output);
+        while (!stack.isEmpty()) pushStack(stack, output);
         return new LinkedList<>(output);
     }
 
@@ -106,16 +107,27 @@ class Calc {
 
 
     private void pushStack(Stack<String> stack, Deque<String> output) {
+        /*Cycle used, because stack doesn't have descending iterator
+         *and it's single-thread application. Stack pushing while
+         *element isn't a close bracket, or elements ends*/
 
-        Collections.reverse(stack);
-        Iterator<String> iterator = stack.iterator();
-        while (iterator.hasNext()) {
-            String s1 = iterator.next();
+        //int b - brackets meter
+        for (int i=0, b=0; i<stack.size(); ) {
 
-            if (!(s1.equals("(")||s1.equals(")"))) {
-                output.add(s1);
+            String s = stack.peek();
+
+            if (s.equals("(")) b--;
+            if (s.equals(")")) b++;
+
+            if (s.equals("(") && b == 0) {
+                stack.pop();
+                break;
             }
-            iterator.remove();
+
+            if (!(s.equals("(")||s.equals(")"))) {
+                output.add(s);
+            }
+            stack.pop();
         }
     }
 
@@ -153,13 +165,17 @@ class Calc {
 
 
     private Double operation(Double a, Double b, String operation) {
+        Double result;
 
         switch (operation) {
-            case "+": return a+b;
-            case "-": return a-b;
-            case "*": return a*b;
-            case "/": return a/b;
+            case "+": result = a+b; break;
+            case "-": result = a-b; break;
+            case "*": result = a*b; break;
+            case "/": result = a/b; break;
+
+            default: return null;
         }
-        return null;
+        //round to (x).xxxxx to avoid problem with double
+        return BigDecimal.valueOf(result).setScale(5, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 }
